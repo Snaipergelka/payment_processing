@@ -1,0 +1,18 @@
+name: payment-processing-test
+
+services:
+  postgres-test:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: payments_test
+      POSTGRES_PASSWORD: payments_test
+      POSTGRES_DB: payments_test
+    ports:
+      - "55432:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U payments_test -d payments_test"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
