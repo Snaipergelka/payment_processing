@@ -37,9 +37,7 @@ async def test_duplicate_idempotency_key_returns_existing_payment(db_session):
     key = new_idempotency_key()
 
     first, first_created = await create_payment(db_session, key, _make_request())
-    second, second_created = await create_payment(
-        db_session, key, _make_request(amount="999.00")
-    )
+    second, second_created = await create_payment(db_session, key, _make_request(amount="999.00"))
 
     assert first_created is True
     assert second_created is False

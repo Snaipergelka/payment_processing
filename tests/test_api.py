@@ -1,7 +1,6 @@
 import uuid
 from decimal import Decimal
 
-import pytest
 from sqlalchemy import select
 
 from app.models import Payment
@@ -34,9 +33,7 @@ async def test_get_payment_requires_api_key(api_client):
 
 
 async def test_get_payment_rejects_wrong_api_key(api_client):
-    response = await api_client.get(
-        f"{PAYMENTS_URL}/{uuid.uuid4()}", headers={"X-API-Key": "nope"}
-    )
+    response = await api_client.get(f"{PAYMENTS_URL}/{uuid.uuid4()}", headers={"X-API-Key": "nope"})
     assert response.status_code == 401
 
 
@@ -94,9 +91,7 @@ async def test_get_payment_with_malformed_uuid_returns_422(api_client, auth_head
     assert response.status_code == 422
 
 
-async def test_get_payment_returns_full_detail_with_correct_field_mapping(
-    api_client, auth_headers
-):
+async def test_get_payment_returns_full_detail_with_correct_field_mapping(api_client, auth_headers):
     headers = {**auth_headers, "Idempotency-Key": new_idempotency_key()}
     create_response = await api_client.post(
         PAYMENTS_URL,

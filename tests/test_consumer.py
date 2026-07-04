@@ -1,5 +1,4 @@
 import uuid
-from datetime import datetime, timezone
 from decimal import Decimal
 from unittest.mock import AsyncMock
 
@@ -67,6 +66,7 @@ async def _create_payment(session_factory, **overrides) -> Payment:
         await session.refresh(payment)
         return payment
 
+
 FORCE_SUCCESS = 0.99
 FORCE_FAILURE = 0.0
 
@@ -114,9 +114,7 @@ async def test_business_failure_still_updates_status_and_sends_webhook(
 async def test_webhook_failure_schedules_retry_with_incremented_attempt(
     consumer_env, session_factory, monkeypatch
 ):
-    monkeypatch.setattr(
-        consumer_app.httpx, "AsyncClient", _make_fake_async_client("server_error")
-    )
+    monkeypatch.setattr(consumer_app.httpx, "AsyncClient", _make_fake_async_client("server_error"))
     monkeypatch.setattr(consumer_app.random, "random", lambda: FORCE_SUCCESS)
 
     payment = await _create_payment(session_factory)
@@ -138,9 +136,7 @@ async def test_webhook_failure_schedules_retry_with_incremented_attempt(
 async def test_webhook_non_2xx_response_also_triggers_retry(
     consumer_env, session_factory, monkeypatch
 ):
-    monkeypatch.setattr(
-        consumer_app.httpx, "AsyncClient", _make_fake_async_client("server_error")
-    )
+    monkeypatch.setattr(consumer_app.httpx, "AsyncClient", _make_fake_async_client("server_error"))
     monkeypatch.setattr(consumer_app.random, "random", lambda: FORCE_SUCCESS)
 
     payment = await _create_payment(session_factory)

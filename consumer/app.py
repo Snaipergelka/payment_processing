@@ -31,13 +31,12 @@ settings = get_settings()
 app = FastStream(broker)
 
 
-class WebhookDeliveryError(Exception): pass
+class WebhookDeliveryError(Exception):
+    pass
 
 
 async def _run_gateway_emulation(payment: Payment) -> None:
-    delay = random.uniform(
-        settings.gateway_min_delay_seconds, settings.gateway_max_delay_seconds
-    )
+    delay = random.uniform(settings.gateway_min_delay_seconds, settings.gateway_max_delay_seconds)
     await asyncio.sleep(delay)
     succeeded = random.random() >= settings.gateway_failure_rate
     payment.status = PaymentStatus.SUCCEEDED if succeeded else PaymentStatus.FAILED
@@ -59,9 +58,7 @@ async def _send_webhook(payment: Payment) -> None:
         async with httpx.AsyncClient(timeout=settings.webhook_timeout_seconds) as client:
             response = await client.post(payment.webhook_url, json=body)
         if response.status_code >= 400:
-            raise WebhookDeliveryError(
-                f"webhook endpoint returned HTTP {response.status_code}"
-            )
+            raise WebhookDeliveryError(f"webhook endpoint returned HTTP {response.status_code}")
     except httpx.HTTPError as exc:
         raise WebhookDeliveryError(f"webhook request failed: {exc}") from exc
 
@@ -121,7 +118,9 @@ async def handle_payment_new(event: PaymentNewEvent) -> None:
                 payment.webhook_delivered_at = datetime.now(timezone.utc)
                 await session.commit()
 
-        logger.info("Payment %s fully processed (status=%s)", event.payment_id, payment.status.value)
+        logger.info(
+            "Payment %s fully processed (status=%s)", event.payment_id, payment.status.value
+        )
     except Exception as exc:  # noqa: BLE001 - any failure funnels into retry/DLQ handling
         await _schedule_retry_or_dlq(event, exc)
 

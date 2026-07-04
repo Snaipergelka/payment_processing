@@ -34,5 +34,8 @@ build-backend = "poetry.core.masonry.api"
 line-length = 100
 target-version = "py312"
 
+[tool.ruff.lint.per-file-ignores]
+"tests/conftest.py" = ["E402"]
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

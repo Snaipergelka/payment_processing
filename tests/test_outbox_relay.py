@@ -66,17 +66,13 @@ async def test_publish_pending_batch_marks_event_published_on_success(db_session
     assert event.published_at is not None
 
 
-async def test_publish_pending_batch_keeps_event_pending_on_broker_failure(
-    db_session, monkeypatch
-):
+async def test_publish_pending_batch_keeps_event_pending_on_broker_failure(db_session, monkeypatch):
     payment = _pending_payment()
     db_session.add(payment)
     await db_session.flush()
     event = await _add_outbox_event(db_session, payment)
 
-    monkeypatch.setattr(
-        relay.broker, "publish", AsyncMock(side_effect=RuntimeError("broker down"))
-    )
+    monkeypatch.setattr(relay.broker, "publish", AsyncMock(side_effect=RuntimeError("broker down")))
 
     published_count = await _publish_pending_batch(db_session)
 
