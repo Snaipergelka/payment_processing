@@ -55,7 +55,7 @@ async def test_publish_pending_batch_marks_event_published_on_success(db_session
     event = await _add_outbox_event(db_session, payment)
 
     publish_mock = AsyncMock(return_value=None)
-    monkeypatch.setattr(relay.broker, "publish", publish_mock)
+    monkeypatch.setattr(relay, "_publish_outbox_event", publish_mock)
 
     published_count = await _publish_pending_batch(db_session)
 
@@ -72,7 +72,11 @@ async def test_publish_pending_batch_keeps_event_pending_on_broker_failure(db_se
     await db_session.flush()
     event = await _add_outbox_event(db_session, payment)
 
-    monkeypatch.setattr(relay.broker, "publish", AsyncMock(side_effect=RuntimeError("broker down")))
+    monkeypatch.setattr(
+        relay,
+        "_publish_outbox_event",
+        AsyncMock(side_effect=RuntimeError("broker down")),
+    )
 
     published_count = await _publish_pending_batch(db_session)
 
@@ -86,7 +90,7 @@ async def test_publish_pending_batch_keeps_event_pending_on_broker_failure(db_se
 
 async def test_publish_pending_batch_is_noop_when_nothing_pending(db_session, monkeypatch):
     publish_mock = AsyncMock(return_value=None)
-    monkeypatch.setattr(relay.broker, "publish", publish_mock)
+    monkeypatch.setattr(relay, "_publish_outbox_event", publish_mock)
 
     published_count = await _publish_pending_batch(db_session)
 
@@ -106,7 +110,7 @@ async def test_publish_pending_batch_does_not_touch_already_published_events(
     await db_session.commit()
 
     publish_mock = AsyncMock(return_value=None)
-    monkeypatch.setattr(relay.broker, "publish", publish_mock)
+    monkeypatch.setattr(relay, "_publish_outbox_event", publish_mock)
 
     published_count = await _publish_pending_batch(db_session)
 

@@ -1,11 +1,13 @@
 import asyncio
+import json
 import logging
 from datetime import datetime, timedelta, timezone
 
+import aio_pika
 from sqlalchemy import Select, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.broker import MAIN_ROUTING_KEY, broker, main_exchange
+from app.broker import MAIN_EXCHANGE_NAME, MAIN_ROUTING_KEY
 from app.config import get_settings
 from app.db import AsyncSessionLocal
 from app.models import OutboxEvent, OutboxStatus, Payment, PaymentStatus
@@ -18,6 +20,28 @@ def _skip_locked(stmt: Select, session: AsyncSession) -> Select:
     if session.get_bind().dialect.name == "postgresql":
         return stmt.with_for_update(skip_locked=True)
     return stmt
+
+
+async def _publish_outbox_event(event: OutboxEvent) -> None:
+    connection = await aio_pika.connect_robust(settings.rabbitmq_url)
+    try:
+        channel = await connection.channel(publisher_confirms=True)
+        exchange = await channel.declare_exchange(
+            MAIN_EXCHANGE_NAME,
+            aio_pika.ExchangeType.TOPIC,
+            durable=True,
+        )
+        await exchange.publish(
+            aio_pika.Message(
+                body=json.dumps(event.payload).encode("utf-8"),
+                content_type="application/json",
+                delivery_mode=aio_pika.DeliveryMode.PERSISTENT,
+            ),
+            routing_key=event.routing_key,
+            mandatory=True,
+        )
+    finally:
+        await connection.close()
 
 
 async def _publish_pending_batch(session: AsyncSession) -> int:
@@ -37,11 +61,7 @@ async def _publish_pending_batch(session: AsyncSession) -> int:
     published = 0
     for event in events:
         try:
-            await broker.publish(
-                event.payload,
-                exchange=main_exchange,
-                routing_key=event.routing_key,
-            )
+            await _publish_outbox_event(event)
         except Exception as exc:  # noqa: BLE001 - broker/network errors, retried next poll
             event.attempts += 1
             event.last_error = str(exc)[:2000]

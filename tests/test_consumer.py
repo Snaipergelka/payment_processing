@@ -95,8 +95,6 @@ async def test_successful_processing_marks_succeeded_and_sends_webhook(
 async def test_business_failure_still_updates_status_and_sends_webhook(
     consumer_env, session_factory, monkeypatch
 ):
-    client_cls = _make_fake_async_client("success")
-    monkeypatch.setattr(consumer_app.httpx, "AsyncClient", client_cls)
     monkeypatch.setattr(consumer_app.random, "random", lambda: FORCE_FAILURE)
 
     payment = await _create_payment(session_factory)
@@ -104,8 +102,33 @@ async def test_business_failure_still_updates_status_and_sends_webhook(
 
     async with session_factory() as session:
         refreshed = await session.get(Payment, payment.id)
+        assert refreshed.status == PaymentStatus.PENDING
+        assert refreshed.webhook_delivered_at is None
+        assert refreshed.processed_at is None
+
+    consumer_env.assert_awaited_once()
+    args, kwargs = consumer_env.call_args
+    assert kwargs["routing_key"] == "payments.new.retry.1"
+    assert args[0]["attempt"] == 2
+
+
+async def test_final_gateway_failure_marks_failed_and_sends_webhook(
+    consumer_env, session_factory, monkeypatch
+):
+    client_cls = _make_fake_async_client("success")
+    monkeypatch.setattr(consumer_app.httpx, "AsyncClient", client_cls)
+    monkeypatch.setattr(consumer_app.random, "random", lambda: FORCE_FAILURE)
+
+    payment = await _create_payment(session_factory)
+    await consumer_app.handle_payment_new(
+        PaymentNewEvent(payment_id=payment.id, attempt=consumer_app.settings.max_delivery_attempts)
+    )
+
+    async with session_factory() as session:
+        refreshed = await session.get(Payment, payment.id)
         assert refreshed.status == PaymentStatus.FAILED
         assert refreshed.webhook_delivered_at is not None
+        assert refreshed.processed_at is not None
 
     assert client_cls.calls[0]["json"]["status"] == "failed"
     consumer_env.assert_not_awaited()

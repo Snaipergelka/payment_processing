@@ -35,13 +35,34 @@ class WebhookDeliveryError(Exception):
     pass
 
 
-async def _run_gateway_emulation(payment: Payment) -> None:
+class PaymentProcessingError(Exception):
+    pass
+
+
+async def _run_gateway_emulation(payment: Payment, attempt: int) -> None:
     delay = random.uniform(settings.gateway_min_delay_seconds, settings.gateway_max_delay_seconds)
     await asyncio.sleep(delay)
     succeeded = random.random() >= settings.gateway_failure_rate
-    payment.status = PaymentStatus.SUCCEEDED if succeeded else PaymentStatus.FAILED
-    payment.processed_at = datetime.now(timezone.utc)
-    logger.info("Payment %s gateway result: %s", payment.id, payment.status.value)
+    processed_at = datetime.now(timezone.utc)
+    if succeeded:
+        payment.status = PaymentStatus.SUCCEEDED
+        payment.processed_at = processed_at
+        logger.info("Payment %s gateway result: %s", payment.id, payment.status.value)
+        return
+
+    if attempt >= settings.max_delivery_attempts:
+        payment.status = PaymentStatus.FAILED
+        payment.processed_at = processed_at
+        logger.warning(
+            "Payment %s gateway failed on final attempt %d, marking as failed",
+            payment.id,
+            attempt,
+        )
+        return
+
+    raise PaymentProcessingError(
+        f"gateway processing failed on attempt {attempt}/{settings.max_delivery_attempts}"
+    )
 
 
 async def _send_webhook(payment: Payment) -> None:
@@ -110,7 +131,7 @@ async def handle_payment_new(event: PaymentNewEvent) -> None:
                 return
 
             if payment.status == PaymentStatus.PENDING:
-                await _run_gateway_emulation(payment)
+                await _run_gateway_emulation(payment, event.attempt)
                 await session.commit()
 
             if payment.webhook_delivered_at is None:
