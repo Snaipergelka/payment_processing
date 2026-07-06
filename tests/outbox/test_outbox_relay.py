@@ -5,11 +5,12 @@ from unittest.mock import AsyncMock
 
 from sqlalchemy import select
 
-import app.outbox.relay as relay
-from app.broker import MAIN_ROUTING_KEY
-from app.config import get_settings
-from app.models import OutboxEvent, OutboxStatus, Payment, PaymentStatus
-from app.outbox.relay import _publish_pending_batch, _requeue_stale_pending_payments
+import src.background_tasks.outbox.relay as relay
+from src.background_tasks.outbox.models import OutboxEvent, OutboxStatus
+from src.background_tasks.outbox.relay import _publish_pending_batch, _requeue_stale_pending_payments
+from src.config import get_settings
+from src.payments.models import Payment, PaymentStatus
+from src.rabbit.broker.setup import MAIN_ROUTING_KEY
 
 settings = get_settings()
 

@@ -7,10 +7,10 @@ from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, Field, HttpUrl
 
-from app.models import Currency, PaymentStatus
+from src.payments.models import Currency, PaymentStatus
 
 if TYPE_CHECKING:
-    from app.models import Payment
+    from src.payments.models import Payment
 
 
 class PaymentCreateRequest(BaseModel):

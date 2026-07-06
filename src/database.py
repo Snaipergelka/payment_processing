@@ -1,3 +1,4 @@
+import enum
 from collections.abc import AsyncIterator
 
 from sqlalchemy.ext.asyncio import (
@@ -7,7 +8,7 @@ from sqlalchemy.ext.asyncio import (
 )
 from sqlalchemy.orm import DeclarativeBase
 
-from app.config import get_settings
+from src.config import get_settings
 
 settings = get_settings()
 
@@ -28,3 +29,7 @@ class Base(DeclarativeBase):
 async def get_session() -> AsyncIterator[AsyncSession]:
     async with AsyncSessionLocal() as session:
         yield session
+
+
+def enum_values(enum_cls: type[enum.Enum]) -> list[str]:
+    return [member.value for member in enum_cls]

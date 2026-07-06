@@ -28,7 +28,7 @@ services:
       - "15672:15672"
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
-      - ./docker/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+      - ./deploy/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
       interval: 5s
@@ -47,7 +47,7 @@ services:
 
   rabbitmq-init:
     build: .
-    command: ["python", "-m", "scripts.init_rabbitmq"]
+    command: ["python", "-m", "deploy.scripts.init_rabbitmq"]
     env_file: .env
     depends_on:
       rabbitmq:
@@ -56,7 +56,7 @@ services:
 
   api:
     build: .
-    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    command: ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
     restart: unless-stopped
     ports:
       - "8000:8000"
@@ -79,7 +79,7 @@ services:
 
   consumer:
     build: .
-    command: ["faststream", "run", "app.consumer.app:app"]
+    command: ["faststream", "run", "src.rabbit.consumer.app:app"]
     restart: unless-stopped
     env_file: .env
     depends_on:

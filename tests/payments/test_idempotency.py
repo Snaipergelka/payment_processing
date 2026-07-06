@@ -4,10 +4,11 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
-from app.models import OutboxEvent, OutboxStatus, Payment
-from app.schemas import PaymentCreateRequest
-from app.services import payments as payments_service
-from app.services.payments import create_payment, get_payment_by_idempotency_key
+from src.background_tasks.outbox.models import OutboxEvent, OutboxStatus
+from src.payments import service as payments_service
+from src.payments.models import Payment
+from src.payments.schemas import PaymentCreateRequest
+from src.payments.service import create_payment, get_payment_by_idempotency_key
 from tests.conftest import new_idempotency_key, valid_payment_payload
 
 

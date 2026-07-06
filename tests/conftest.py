@@ -22,7 +22,9 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
-from app.db import Base
+from src.database import Base
+from src.background_tasks.outbox import models as outbox_models  # noqa: F401  register OutboxEvent
+from src.payments import models as payments_models  # noqa: F401  register Payment on Base.metadata
 
 _TABLES = ["outbox_events", "payments"]
 
@@ -58,8 +60,8 @@ async def _clean_tables(engine: AsyncEngine) -> AsyncIterator[None]:
 
 @pytest_asyncio.fixture
 async def api_client(session_factory: async_sessionmaker) -> AsyncIterator[AsyncClient]:
-    from app.db import get_session
-    from app.main import app as fastapi_app
+    from src.database import get_session
+    from src.main import app as fastapi_app
 
     async def override_get_session() -> AsyncIterator[AsyncSession]:
         async with session_factory() as session:

@@ -4,9 +4,10 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.broker import MAIN_ROUTING_KEY
-from app.models import OutboxEvent, Payment
-from app.schemas import PaymentCreateRequest
+from src.rabbit.broker.setup import MAIN_ROUTING_KEY
+from src.background_tasks.outbox.models import OutboxEvent
+from src.payments.models import Payment
+from src.payments.schemas import PaymentCreateRequest
 
 
 async def get_payment_by_idempotency_key(

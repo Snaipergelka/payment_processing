@@ -1,6 +1,6 @@
 import aio_pika
 
-from app.broker import (
+from src.rabbit.broker.setup import (
     DLQ_EXCHANGE_NAME,
     DLQ_QUEUE_NAME,
     DLQ_ROUTING_KEY,

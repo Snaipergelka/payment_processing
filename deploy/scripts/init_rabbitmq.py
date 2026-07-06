@@ -1,8 +1,8 @@
 import asyncio
 import logging
 
-from app.config import get_settings
-from app.rabbitmq_topology import declare_topology
+from src.config import get_settings
+from src.rabbit.broker.topology import declare_topology
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

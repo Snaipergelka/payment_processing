@@ -7,7 +7,11 @@ import httpx
 
 from faststream import FastStream
 
-from app.broker import (
+from src.config import get_settings
+from src.database import AsyncSessionLocal
+from src.payments.models import Payment, PaymentStatus
+from src.rabbit.broker.events import PaymentNewEvent
+from src.rabbit.broker.setup import (
     DLQ_ROUTING_KEY,
     RETRY_QUEUES,
     RETRY_ROUTING_KEYS,
@@ -18,10 +22,6 @@ from app.broker import (
     payments_new_queue,
     retry_exchange,
 )
-from app.config import get_settings
-from app.db import AsyncSessionLocal
-from app.events import PaymentNewEvent
-from app.models import Payment, PaymentStatus
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

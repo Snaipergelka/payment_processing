@@ -65,27 +65,46 @@ curl http://localhost:8000/api/v1/payments/$PAYMENT_ID \
 
 ## Структура проекта
 
+Структура доменная (как в `fastapi-best-practices`) — каждый модуль под `src/`
+несёт свой router/schemas/models/service, а не разложен по техническим
+слоям:
+
 ```
-app/
-  main.py            FastAPI app, lifespan запускает outbox relay
-  config.py          настройки (pydantic-settings)
-  db.py              async engine/session, Base
-  models.py          Payment, OutboxEvent (SQLAlchemy 2.0)
-  schemas.py         Pydantic v2 схемы запросов/ответов
-  security.py        зависимость X-API-Key
-  broker.py          топология RabbitMQ (exchanges/queues), общий для api и consumer
-  events.py          Pydantic-схема сообщения payments.new
-  api/payments.py    роутер: POST/GET /api/v1/payments
-  services/payments.py  идемпотентное создание платежа + запись outbox (1 транзакция)
-  outbox/relay.py    background-задача, публикующая outbox в RabbitMQ
-  consumer/app.py    единственный consumer: эмуляция шлюза + webhook + retry/DLQ
-migrations/           Alembic (async env.py + начальная миграция)
+src/
+  main.py                FastAPI app, lifespan запускает outbox relay
+  config.py              настройки (pydantic-settings)
+  database.py            async engine/session, Base, общий enum_values helper
+  payments/              домен "платежи"
+    models.py              Payment, Currency, PaymentStatus (SQLAlchemy 2.0)
+    schemas.py              Pydantic v2 схемы запросов/ответов
+    router.py               POST/GET /api/v1/payments
+    service.py               идемпотентное создание платежа + запись outbox (1 транзакция)
+    dependencies.py          зависимость X-API-Key
+  background_tasks/       фоновые задачи
+    outbox/                 транзакционный outbox
+      models.py               OutboxEvent, OutboxStatus
+      relay.py                 background-задача, публикующая outbox в RabbitMQ
+  rabbit/                 всё, что относится к RabbitMQ
+    broker/                  общая для api и consumer инфраструктура
+      setup.py                 топология FastStream (exchanges/queues)
+      events.py                Pydantic-схема сообщения payments.new
+      topology.py              декларация топологии через aio-pika (для rabbitmq-init)
+    consumer/
+      app.py                   единственный consumer: эмуляция шлюза + webhook + retry/DLQ
+migrations/               Alembic (async env.py + миграции)
+deploy/                   всё для деплоя/инфраструктуры (не бизнес-код)
+  rabbitmq.conf             монтируется в контейнер rabbitmq (consumer_timeout)
+  scripts/
+    init_rabbitmq.py          одноразовая декларация топологии RabbitMQ
 tests/
   conftest.py             фикстуры: engine/сессия на реальный тестовый Postgres + httpx test-клиент FastAPI
-  test_idempotency.py     идемпотентность: дубли, гонка на commit, unique-constraint
-  test_api.py             401/404/422 эндпоинтов, идемпотентный POST, маппинг полей в GET
-  test_outbox_relay.py    outbox: публикация/ретрай, стейл-реконсиляция и её лимит
-  test_consumer.py        consumer: retry/DLQ роутинг, бизнес-отказ vs техническая ошибка
+  payments/
+    test_idempotency.py    идемпотентность: дубли, гонка на commit, unique-constraint
+    test_api.py            401/404/422 эндпоинтов, идемпотентный POST, маппинг полей в GET
+  outbox/
+    test_outbox_relay.py   outbox: публикация/ретрай, стейл-реконсиляция и её лимит
+  consumer/
+    test_consumer.py       consumer: retry/DLQ роутинг, бизнес-отказ vs техническая ошибка
   mock_webhook_server.py  тестовый HTTP-приёмник вебхуков (для ручной проверки)
 docker-compose.yml
 docker-compose.test.yml  одноразовый Postgres для `make test` (см. раздел "Тесты")

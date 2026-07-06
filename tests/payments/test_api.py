@@ -3,7 +3,7 @@ from decimal import Decimal
 
 from sqlalchemy import select
 
-from app.models import Payment
+from src.payments.models import Payment
 from tests.conftest import new_idempotency_key, valid_payment_payload
 
 PAYMENTS_URL = "/api/v1/payments"

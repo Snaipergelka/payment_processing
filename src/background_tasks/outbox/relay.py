@@ -7,10 +7,11 @@ import aio_pika
 from sqlalchemy import Select, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.broker import MAIN_EXCHANGE_NAME, MAIN_ROUTING_KEY
-from app.config import get_settings
-from app.db import AsyncSessionLocal
-from app.models import OutboxEvent, OutboxStatus, Payment, PaymentStatus
+from src.background_tasks.outbox.models import OutboxEvent, OutboxStatus
+from src.config import get_settings
+from src.database import AsyncSessionLocal
+from src.payments.models import Payment, PaymentStatus
+from src.rabbit.broker.setup import MAIN_EXCHANGE_NAME, MAIN_ROUTING_KEY
 
 logger = logging.getLogger(__name__)
 settings = get_settings()

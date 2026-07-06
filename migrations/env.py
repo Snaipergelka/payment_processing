@@ -5,9 +5,10 @@ from alembic import context
 from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
-from app.config import get_settings
-from app.db import Base
-from app import models  # noqa: F401  (ensures models are registered on Base.metadata)
+from src.config import get_settings
+from src.database import Base
+from src.background_tasks.outbox import models as outbox_models  # noqa: F401  register OutboxEvent
+from src.payments import models as payments_models  # noqa: F401  register Payment on Base.metadata
 
 config = context.config
 

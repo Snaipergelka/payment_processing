@@ -5,9 +5,9 @@ from unittest.mock import AsyncMock
 import httpx
 import pytest
 
-from app.consumer import app as consumer_app
-from app.events import PaymentNewEvent
-from app.models import Payment, PaymentStatus
+from src.rabbit.broker.events import PaymentNewEvent
+from src.rabbit.consumer import app as consumer_app
+from src.payments.models import Payment, PaymentStatus
 
 
 def _make_fake_async_client(behavior: str):

@@ -5,9 +5,9 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from app.api.payments import router as payments_router
-from app.broker import broker
-from app.outbox.relay import outbox_relay_loop
+from src.rabbit.broker.setup import broker
+from src.background_tasks.outbox.relay import outbox_relay_loop
+from src.payments.router import router as payments_router
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
