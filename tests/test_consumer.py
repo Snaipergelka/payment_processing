@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock
 import httpx
 import pytest
 
-import consumer.app as consumer_app
+from app.consumer import app as consumer_app
 from app.events import PaymentNewEvent
 from app.models import Payment, PaymentStatus
 
@@ -143,7 +143,6 @@ async def test_webhook_failure_schedules_retry_with_incremented_attempt(
     payment = await _create_payment(session_factory)
     await consumer_app.handle_payment_new(PaymentNewEvent(payment_id=payment.id, attempt=1))
 
-    # the gateway step itself succeeded and was persisted - only the webhook failed
     async with session_factory() as session:
         refreshed = await session.get(Payment, payment.id)
         assert refreshed.status == PaymentStatus.SUCCEEDED

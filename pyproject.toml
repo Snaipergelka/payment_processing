@@ -12,7 +12,7 @@ fastapi = "0.115.6"
 uvicorn = { extras = ["standard"], version = "0.34.0" }
 pydantic = "2.10.4"
 pydantic-settings = "2.7.1"
-sqlalchemy = "2.0.36"
+sqlalchemy = { extras = ["asyncio"], version = "2.0.36" }
 asyncpg = "0.30.0"
 alembic = "1.14.0"
 faststream = { extras = ["rabbit", "cli"], version = "0.5.34" }

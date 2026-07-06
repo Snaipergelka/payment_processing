@@ -78,8 +78,7 @@ app/
   api/payments.py    роутер: POST/GET /api/v1/payments
   services/payments.py  идемпотентное создание платежа + запись outbox (1 транзакция)
   outbox/relay.py    background-задача, публикующая outbox в RabbitMQ
-consumer/
-  app.py             единственный consumer: эмуляция шлюза + webhook + retry/DLQ
+  consumer/app.py    единственный consumer: эмуляция шлюза + webhook + retry/DLQ
 migrations/           Alembic (async env.py + начальная миграция)
 tests/
   conftest.py             фикстуры: engine/сессия на реальный тестовый Postgres + httpx test-клиент FastAPI

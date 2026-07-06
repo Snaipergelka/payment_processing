@@ -62,6 +62,10 @@ services:
       - "8000:8000"
     env_file: .env
     depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
       migrate:
         condition: service_completed_successfully
       rabbitmq-init:
@@ -75,10 +79,14 @@ services:
 
   consumer:
     build: .
-    command: ["faststream", "run", "consumer.app:app"]
+    command: ["faststream", "run", "app.consumer.app:app"]
     restart: unless-stopped
     env_file: .env
     depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
       migrate:
         condition: service_completed_successfully
       rabbitmq-init:
